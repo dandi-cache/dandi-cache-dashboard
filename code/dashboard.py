@@ -164,12 +164,12 @@ def describe(repo: str, /) -> dict:
 
 WIDTH = 1060
 ROW = 30
-TOP = 92
-#: Column anchors: the name from the left, numbers right-aligned, the bar from its left edge.
-NAME_X, DATA_X, FILES_X, DIST_X, UPDATED_X = 24, 470, 580, 690, 720
-BAR_X, BAR_WIDTH, PERCENT_X = 870, 110, 1036
-#: About the width of a size such as "11.9 GB", for spanning the two `derivatives/` columns.
-SIZE_WIDTH = 64
+TOP = 74
+#: Column anchors: the name from the left, the other columns and their titles centered.
+NAME_X, DATA_X, FILES_X, DIST_X, UPDATED_X = 24, 440, 550, 660, 790
+#: The bar from its left edge and the percentage right-aligned, under a title centered on both.
+BAR_X, BAR_WIDTH, PERCENT_X = 906, 80, 1036
+PROCESSED_X = (BAR_X + PERCENT_X) // 2
 
 STYLE = """
   svg { --surface: #fcfcfb; --text-primary: #0b0b0b; --text-secondary: #52514e; --muted: #898781;
@@ -181,7 +181,6 @@ STYLE = """
   text { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
          fill: var(--text-primary); font-size: 13px; }
   .surface { fill: var(--surface); }
-  .title { font-size: 18px; font-weight: 600; }
   .updated { fill: var(--text-secondary); font-size: 12px; }
   .head { fill: var(--muted); font-size: 11px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; }
   .num { font-variant-numeric: tabular-nums; }
@@ -234,28 +233,24 @@ def draw(rows: list[dict], now: datetime.datetime, /) -> str:
         ),
         f"<style>{STYLE}</style>",
         f'<rect class="surface" width="{WIDTH}" height="{height}" rx="8"/>',
-        f'<text class="title" x="{NAME_X}" y="34">DANDI caches</text>',
-        f'<text class="updated" x="{PERCENT_X}" y="34" text-anchor="end">'
+        f'<text class="updated" x="{PERCENT_X}" y="28" text-anchor="end">'
         f"Table last updated: {now:%Y-%m-%d %H:%M} UTC</text>",
-        f'<text class="head" x="{NAME_X}" y="80">Cache</text>',
-        f'<text class="head" x="{(DATA_X - SIZE_WIDTH + FILES_X) // 2}" y="62" text-anchor="middle">'
-        "derivatives/</text>",
-        f'<line class="rule" x1="{DATA_X - SIZE_WIDTH}" x2="{FILES_X}" y1="68" y2="68"/>',
-        f'<text class="head" x="{DATA_X}" y="80" text-anchor="end">data</text>',
-        f'<text class="head" x="{FILES_X}" y="80" text-anchor="end">on disk</text>',
-        f'<text class="head" x="{DIST_X}" y="80" text-anchor="end">dist</text>',
-        f'<text class="head" x="{UPDATED_X}" y="80">Cache last updated (UTC)</text>',
-        f'<text class="head" x="{PERCENT_X}" y="80" text-anchor="end">Processed</text>',
+        f'<text class="head" x="{NAME_X}" y="{TOP - 12}">Cache</text>',
+        f'<text class="head" x="{DATA_X}" y="{TOP - 12}" text-anchor="middle">data</text>',
+        f'<text class="head" x="{FILES_X}" y="{TOP - 12}" text-anchor="middle">on disk</text>',
+        f'<text class="head" x="{DIST_X}" y="{TOP - 12}" text-anchor="middle">dist</text>',
+        f'<text class="head" x="{UPDATED_X}" y="{TOP - 12}" text-anchor="middle">Cache last updated (UTC)</text>',
+        f'<text class="head" x="{PROCESSED_X}" y="{TOP - 12}" text-anchor="middle">Processed</text>',
         f'<line class="rule" x1="{NAME_X}" x2="{PERCENT_X}" y1="{TOP - 6}" y2="{TOP - 6}"/>',
     ]
     for index, row in enumerate(rows):
         baseline = TOP + ROW * index + 19
         middle = baseline - 4
         lines.append(cell(NAME_X, baseline, row["cache"]))
-        lines.append(cell(DATA_X, baseline, human_size(row["derivatives_data"]), "end", numeric=True))
-        lines.append(cell(FILES_X, baseline, human_size(row["derivatives_files"]), "end", numeric=True))
-        lines.append(cell(DIST_X, baseline, human_size(row["dist_bytes"]), "end", numeric=True))
-        lines.append(cell(UPDATED_X, baseline, updated_text(row["updated"]), numeric=True))
+        lines.append(cell(DATA_X, baseline, human_size(row["derivatives_data"]), "middle", numeric=True))
+        lines.append(cell(FILES_X, baseline, human_size(row["derivatives_files"]), "middle", numeric=True))
+        lines.append(cell(DIST_X, baseline, human_size(row["dist_bytes"]), "middle", numeric=True))
+        lines.append(cell(UPDATED_X, baseline, updated_text(row["updated"]), "middle", numeric=True))
         if row["candidates"]:
             fraction = min(row["recorded"] / row["candidates"], 1.0)
             lines.append(f'<rect class="track" x="{BAR_X}" y="{middle - 4}" width="{BAR_WIDTH}" height="8" rx="4"/>')
@@ -266,7 +261,7 @@ def draw(rows: list[dict], now: datetime.datetime, /) -> str:
                 )
             lines.append(cell(PERCENT_X, baseline, f"{100 * fraction:.1f}%", "end", numeric=True))
         else:
-            lines.append(cell(PERCENT_X, baseline, "—", "end"))
+            lines.append(cell(PROCESSED_X, baseline, "—", "middle"))
         if index < len(rows) - 1:
             lines.append(
                 f'<line class="rule" x1="{NAME_X}" x2="{PERCENT_X}" y1="{baseline + 11}" y2="{baseline + 11}"/>'
