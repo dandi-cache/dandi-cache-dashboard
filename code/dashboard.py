@@ -23,6 +23,9 @@ other than the template. For each one:
 
 Usage: `python3 code/dashboard.py --output <directory>`, which writes `dashboard.svg` and `dashboard.tsv`
 (lists joined by commas), or `python3 code/dashboard.py --mermaid` for the README's diagram of the inputs.
+
+The rows are ordered by their sourcedata: by the longest chain of inputs from the archive, then by where
+a cache's inputs sit, which is about how the diagram reads, left to right and then top to bottom.
 `GITHUB_TOKEN`, when set, is sent with every API request.
 """
 
@@ -327,9 +330,35 @@ def write_tsv(rows: list[dict], path: pathlib.Path, /) -> None:
         )
 
 
+def layered(graph: dict[str, list[str]], /) -> dict[str, list[str]]:
+    """The caches in the order the diagram reads, left to right and then top to bottom.
+
+    A cache's column is the longest chain of inputs from the DANDI archive to it. Within a column,
+    caches are ordered by where their inputs sit, so those built from the same sources sit together.
+    """
+    depth: dict[str, int] = {}
+
+    def column(name: str, /) -> int:
+        if name not in depth:
+            depth[name] = 1 + max((column(source) for source in graph[name] if source in graph), default=0)
+        return depth[name]
+
+    position: dict[str, int] = {}
+    for level in sorted({column(name) for name in graph}):
+        here = [name for name in graph if depth[name] == level]
+
+        def place(name: str, /) -> tuple[float, str]:
+            placed = [position[source] for source in graph[name] if source in position]
+            return (sum(placed) / len(placed) if placed else -1, name)
+
+        for name in sorted(here, key=place):
+            position[name] = len(position)
+    return {name: graph[name] for name in sorted(graph, key=position.__getitem__)}
+
+
 def mermaid(graph: dict[str, list[str]], /) -> str:
     """A flowchart of which cache feeds which, from the DANDI archive down."""
-    nodes = sorted({*graph, *(source for sources in graph.values() for source in sources)})
+    nodes = [*graph, *sorted({source for sources in graph.values() for source in sources} - graph.keys())]
     lines = ["flowchart LR", f'    archive[("{ARCHIVE}")]']
     lines += [f'    {node.replace("-", "_")}["{node}"]' for node in nodes]
     for name, sources in graph.items():
@@ -347,7 +376,7 @@ def main() -> int:
     if not arguments.mermaid and arguments.output is None:
         parser.error("one of --output or --mermaid is required")
 
-    graph = {name: inputs(name) or [] for name in arguments.cache} if arguments.cache else caches()
+    graph = layered({name: inputs(name) or [] for name in arguments.cache} if arguments.cache else caches())
     if arguments.mermaid:
         print(mermaid(graph), end="")
         return 0

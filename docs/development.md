@@ -12,6 +12,10 @@ Sizes are in decimal units: 1 kB is 1000 bytes and 1 GB is 10⁹ bytes.
 - **Cache last updated**: when the `derivatives` branch last changed.
 - **Processed**: how many of the cache's candidates are recorded, from the `Progress:` line the last run wrote to its log under `logs/`. A dash means the latest runs did not write one: the cache predates that line in `dandi-cache-utils`, or it selects its own batch.
 
+## Row order
+
+The rows are ordered by their sourcedata: first by the longest chain of inputs from the DANDI archive, which is the diagram's column, then by where a cache's inputs sit among the rows above, so caches built from the same sources sit together. That is about how the diagram reads, left to right and then top to bottom, though Mermaid can reorder a column to uncross its arrows.
+
 ## Branches
 
 - `main` holds [`code/dashboard.py`](../code/dashboard.py), which reads every cache through the GitHub API, and the workflow that runs it every hour.
