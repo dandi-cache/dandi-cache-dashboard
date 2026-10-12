@@ -1,4 +1,4 @@
-"""Draw the state of every DANDI cache as one SVG table, with a CSV of the same numbers.
+"""Draw the state of every DANDI cache as one SVG table, with a TSV of the same numbers.
 
 Standard library only, so the workflow runs it with the runner's own `python3`. Everything comes
 from the GitHub API and raw file URLs; nothing is cloned.
@@ -18,7 +18,7 @@ other than the template. For each one:
   A cache whose runs do not write one (an older library, or a cache that selects its own batch)
   shows a dash.
 
-Usage: `python3 code/dashboard.py --output <directory>`, which writes `dashboard.svg` and `dashboard.csv`.
+Usage: `python3 code/dashboard.py --output <directory>`, which writes `dashboard.svg` and `dashboard.tsv`.
 `GITHUB_TOKEN`, when set, is sent with every API request.
 """
 
@@ -166,8 +166,10 @@ WIDTH = 1060
 ROW = 30
 TOP = 92
 #: Column anchors: the name from the left, numbers right-aligned, the bar from its left edge.
-NAME_X, DATA_X, FILES_X, DIST_X, UPDATED_X = 24, 450, 560, 660, 690
-BAR_X, BAR_WIDTH, PERCENT_X = 860, 120, 1036
+NAME_X, DATA_X, FILES_X, DIST_X, UPDATED_X = 24, 470, 580, 690, 720
+BAR_X, BAR_WIDTH, PERCENT_X = 870, 110, 1036
+#: About the width of a size such as "11.9 GB", for spanning the two `derivatives/` columns.
+SIZE_WIDTH = 64
 
 STYLE = """
   svg { --surface: #fcfcfb; --text-primary: #0b0b0b; --text-secondary: #52514e; --muted: #898781;
@@ -180,7 +182,7 @@ STYLE = """
          fill: var(--text-primary); font-size: 13px; }
   .surface { fill: var(--surface); }
   .title { font-size: 18px; font-weight: 600; }
-  .subtitle { fill: var(--text-secondary); font-size: 12px; }
+  .updated { fill: var(--text-secondary); font-size: 12px; }
   .head { fill: var(--muted); font-size: 11px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; }
   .num { font-variant-numeric: tabular-nums; }
   .none { fill: var(--muted); }
@@ -190,10 +192,18 @@ STYLE = """
 """
 
 
-def gigabytes(size: int | None, /) -> str:
+def human_size(size: int | None, /) -> str:
+    """Write a size in decimal units (1 kB = 1000 B), with three significant figures."""
     if size is None:
         return "—"
-    return "<0.01" if 0 < size < 5_000_000 else f"{size / 1e9:,.2f}"
+    value = float(size)
+    for unit in ("B", "kB", "MB", "GB", "TB"):
+        rounded = float(f"{value:.3g}")
+        if rounded < 1000 or unit == "TB":
+            break
+        value /= 1000
+    decimals = 0 if unit == "B" or rounded >= 100 else 1 if rounded >= 10 else 2
+    return f"{rounded:,.{decimals}f} {unit}"
 
 
 def updated_text(timestamp: str | None, /) -> str:
@@ -225,14 +235,16 @@ def draw(rows: list[dict], now: datetime.datetime, /) -> str:
         f"<style>{STYLE}</style>",
         f'<rect class="surface" width="{WIDTH}" height="{height}" rx="8"/>',
         f'<text class="title" x="{NAME_X}" y="34">DANDI caches</text>',
-        f'<text class="subtitle" x="{NAME_X}" y="54">Sizes in GB (10⁹ bytes). Updated {now:%Y-%m-%d %H:%M} UTC.</text>',
+        f'<text class="updated" x="{PERCENT_X}" y="34" text-anchor="end">'
+        f"Table last updated: {now:%Y-%m-%d %H:%M} UTC</text>",
         f'<text class="head" x="{NAME_X}" y="80">Cache</text>',
-        f'<text class="head" x="{(DATA_X - 70 + FILES_X) // 2}" y="66" text-anchor="middle">derivatives/</text>',
-        f'<line class="rule" x1="{DATA_X - 70}" x2="{FILES_X}" y1="71" y2="71"/>',
+        f'<text class="head" x="{(DATA_X - SIZE_WIDTH + FILES_X) // 2}" y="62" text-anchor="middle">'
+        "derivatives/</text>",
+        f'<line class="rule" x1="{DATA_X - SIZE_WIDTH}" x2="{FILES_X}" y1="68" y2="68"/>',
         f'<text class="head" x="{DATA_X}" y="80" text-anchor="end">data</text>',
         f'<text class="head" x="{FILES_X}" y="80" text-anchor="end">on disk</text>',
         f'<text class="head" x="{DIST_X}" y="80" text-anchor="end">dist</text>',
-        f'<text class="head" x="{UPDATED_X}" y="80">Last updated (UTC)</text>',
+        f'<text class="head" x="{UPDATED_X}" y="80">Cache last updated (UTC)</text>',
         f'<text class="head" x="{PERCENT_X}" y="80" text-anchor="end">Processed</text>',
         f'<line class="rule" x1="{NAME_X}" x2="{PERCENT_X}" y1="{TOP - 6}" y2="{TOP - 6}"/>',
     ]
@@ -240,9 +252,9 @@ def draw(rows: list[dict], now: datetime.datetime, /) -> str:
         baseline = TOP + ROW * index + 19
         middle = baseline - 4
         lines.append(cell(NAME_X, baseline, row["cache"]))
-        lines.append(cell(DATA_X, baseline, gigabytes(row["derivatives_data"]), "end", numeric=True))
-        lines.append(cell(FILES_X, baseline, gigabytes(row["derivatives_files"]), "end", numeric=True))
-        lines.append(cell(DIST_X, baseline, gigabytes(row["dist_bytes"]), "end", numeric=True))
+        lines.append(cell(DATA_X, baseline, human_size(row["derivatives_data"]), "end", numeric=True))
+        lines.append(cell(FILES_X, baseline, human_size(row["derivatives_files"]), "end", numeric=True))
+        lines.append(cell(DIST_X, baseline, human_size(row["dist_bytes"]), "end", numeric=True))
         lines.append(cell(UPDATED_X, baseline, updated_text(row["updated"]), numeric=True))
         if row["candidates"]:
             fraction = min(row["recorded"] / row["candidates"], 1.0)
@@ -263,7 +275,7 @@ def draw(rows: list[dict], now: datetime.datetime, /) -> str:
     return "\n".join(lines) + "\n"
 
 
-def write_csv(rows: list[dict], path: pathlib.Path, /) -> None:
+def write_tsv(rows: list[dict], path: pathlib.Path, /) -> None:
     fields = [
         "cache",
         "derivatives_data",
@@ -275,14 +287,14 @@ def write_csv(rows: list[dict], path: pathlib.Path, /) -> None:
         "truncated",
     ]
     with path.open("w", newline="") as stream:
-        writer = csv.DictWriter(stream, fieldnames=fields)
+        writer = csv.DictWriter(stream, fieldnames=fields, delimiter="\t", lineterminator="\n")
         writer.writeheader()
         writer.writerows(rows)
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
-    parser.add_argument("--output", type=pathlib.Path, required=True, help="Where to write the SVG and the CSV.")
+    parser.add_argument("--output", type=pathlib.Path, required=True, help="Where to write the SVG and the TSV.")
     parser.add_argument("--cache", action="append", help="Only these caches (for trying it out); repeatable.")
     arguments = parser.parse_args()
 
@@ -295,7 +307,7 @@ def main() -> int:
 
     arguments.output.mkdir(parents=True, exist_ok=True)
     (arguments.output / "dashboard.svg").write_text(draw(rows, now))
-    write_csv(rows, arguments.output / "dashboard.csv")
+    write_tsv(rows, arguments.output / "dashboard.tsv")
     for row in rows:
         if row["truncated"]:
             print(f"::warning::The tree of {row['cache']} was truncated, so its sizes are a lower bound.")
