@@ -1,0 +1,44 @@
+name: Dashboard
+
+# Draws the table of every cache and publishes it to the `dashboard` branch, which the README embeds.
+# The branch holds a single commit that every run replaces, so it keeps no history of its own.
+
+on:
+  schedule:
+    - cron: "23 * * * *"
+  push:
+    branches: [main]
+    paths: [dashboard.py, .github/workflows/dashboard.yml]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: dashboard
+  cancel-in-progress: false
+
+jobs:
+  Dashboard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Draw the dashboard
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python3 dashboard.py --output "${RUNNER_TEMP}/dashboard"
+
+      - name: Publish to the dashboard branch
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        working-directory: ${{ runner.temp }}/dashboard
+        run: |
+          git init -q -b dashboard
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add dashboard.svg dashboard.csv
+          git commit -q -m "Draw the dashboard"
+          git push -q --force "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" dashboard
