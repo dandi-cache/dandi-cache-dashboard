@@ -167,9 +167,10 @@ ROW = 30
 TOP = 92
 #: Column anchors: the name from the left, numbers right-aligned, the bar from its left edge.
 NAME_X, DATA_X, FILES_X, DIST_X, UPDATED_X = 24, 470, 580, 690, 720
-BAR_X, BAR_WIDTH, PERCENT_X = 870, 110, 1036
-#: About the width of a size such as "11.9 GB", for spanning the two `derivatives/` columns.
-SIZE_WIDTH = 64
+BAR_X, BAR_WIDTH, PERCENT_X = 906, 80, 1036
+#: Advance widths, in em, of the characters a size is written with (Helvetica and Arial agree on them).
+GLYPH_WIDTHS = {**dict.fromkeys("0123456789", 0.556), " ": 0.278, ".": 0.278, ",": 0.278, "k": 0.5, "B": 0.667}
+GLYPH_WIDTHS |= {"M": 0.833, "G": 0.778, "T": 0.611, "—": 1.0}
 
 STYLE = """
   svg { --surface: #fcfcfb; --text-primary: #0b0b0b; --text-secondary: #52514e; --muted: #898781;
@@ -220,8 +221,15 @@ def cell(x: int, baseline: int, value: str, anchor: str = "start", numeric: bool
     return f'<text x="{x}" y="{baseline}" text-anchor="{anchor}"{attribute}>{escape(value)}</text>'
 
 
+def text_width(text: str, /, size: int = 13) -> float:
+    """About how wide `text` is drawn, to fit the `derivatives/` group to what is under it."""
+    return size * sum(GLYPH_WIDTHS.get(character, 0.6) for character in text)
+
+
 def draw(rows: list[dict], now: datetime.datetime, /) -> str:
     height = TOP + ROW * len(rows) + 20
+    # The `derivatives/` group spans from the left edge of the widest data size to the right edge of its columns.
+    group_left = round(DATA_X - max((text_width(human_size(row["derivatives_data"])) for row in rows), default=30))
     lines = [
         (
             f'<svg xmlns="http://www.w3.org/2000/svg" width="{WIDTH}" height="{height}" viewBox="0 0 {WIDTH} {height}" '
@@ -238,9 +246,8 @@ def draw(rows: list[dict], now: datetime.datetime, /) -> str:
         f'<text class="updated" x="{PERCENT_X}" y="34" text-anchor="end">'
         f"Table last updated: {now:%Y-%m-%d %H:%M} UTC</text>",
         f'<text class="head" x="{NAME_X}" y="80">Cache</text>',
-        f'<text class="head" x="{(DATA_X - SIZE_WIDTH + FILES_X) // 2}" y="62" text-anchor="middle">'
-        "derivatives/</text>",
-        f'<line class="rule" x1="{DATA_X - SIZE_WIDTH}" x2="{FILES_X}" y1="68" y2="68"/>',
+        f'<text class="head" x="{(group_left + FILES_X) // 2}" y="62" text-anchor="middle">derivatives/</text>',
+        f'<line class="rule" x1="{group_left}" x2="{FILES_X}" y1="68" y2="68"/>',
         f'<text class="head" x="{DATA_X}" y="80" text-anchor="end">data</text>',
         f'<text class="head" x="{FILES_X}" y="80" text-anchor="end">on disk</text>',
         f'<text class="head" x="{DIST_X}" y="80" text-anchor="end">dist</text>',
