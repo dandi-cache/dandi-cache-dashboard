@@ -14,7 +14,7 @@ Sizes are in decimal units: 1 kB is 1000 bytes and 1 GB is 10⁹ bytes.
 
 ## Row order
 
-The rows follow the README's diagram, left to right and then top to bottom. Each run writes the diagram, has Mermaid lay it out with [mermaid-cli](https://github.com/mermaid-js/mermaid-cli), and orders the rows by where each cache landed. Should that step fail, the rows fall back to an approximation: by the longest chain of inputs from the archive, then by where a cache's inputs sit.
+The rows are ordered by their sourcedata: first by the longest chain of inputs from the DANDI archive, which is the diagram's column, then by where a cache's inputs sit among the rows above, so caches built from the same sources sit together. That is about how the diagram reads, left to right and then top to bottom, though Mermaid can reorder a column to uncross its arrows.
 
 ## Branches
 
