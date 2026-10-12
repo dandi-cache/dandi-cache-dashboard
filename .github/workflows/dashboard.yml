@@ -8,7 +8,7 @@ on:
     - cron: "23 * * * *"
   push:
     branches: [main]
-    paths: [dashboard.py, .github/workflows/dashboard.yml]
+    paths: [code/**, .github/workflows/dashboard.yml]
   workflow_dispatch:
 
 permissions:
@@ -29,7 +29,7 @@ jobs:
       - name: Draw the dashboard
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: python3 dashboard.py --output "${RUNNER_TEMP}/dashboard"
+        run: python3 code/dashboard.py --output "${RUNNER_TEMP}/dashboard"
 
       - name: Publish to the dashboard branch
         env:

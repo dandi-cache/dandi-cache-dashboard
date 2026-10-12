@@ -18,7 +18,7 @@ other than the template. For each one:
   A cache whose runs do not write one (an older library, or a cache that selects its own batch)
   shows a dash.
 
-Usage: `python3 dashboard.py --output <directory>`, which writes `dashboard.svg` and `dashboard.csv`.
+Usage: `python3 code/dashboard.py --output <directory>`, which writes `dashboard.svg` and `dashboard.csv`.
 `GITHUB_TOKEN`, when set, is sent with every API request.
 """
 
