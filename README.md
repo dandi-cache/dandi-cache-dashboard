@@ -14,9 +14,4 @@ The same numbers are in [`dashboard.csv`](https://github.com/dandi-cache/dandi-c
 - **Last updated**: when the `derivatives` branch last changed.
 - **Processed**: how many of the cache's candidates are recorded, from the `Progress:` line the last run wrote to its log under `logs/`. A dash means the latest runs did not write one: the cache predates that line in `dandi-cache-utils`, or it selects its own batch.
 
-## Branches
-
-- `main` holds [`code/dashboard.py`](code/dashboard.py), which reads every cache through the GitHub API, and the workflow that runs it every hour.
-- `dashboard` holds the drawing and its CSV. Every run replaces it with a single commit, so it has no history of its own.
-
-A cache is any repository of the organization with a `cache.toml` at its root, other than the template, so a new cache appears on its own.
+See [`docs/development.md`](docs/development.md) for how it is built.
