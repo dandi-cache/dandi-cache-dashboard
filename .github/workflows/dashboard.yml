@@ -26,10 +26,27 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
 
+      - name: Write the diagram
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python3 code/dashboard.py --mermaid > "${RUNNER_TEMP}/diagram.mmd"
+
+      # Mermaid's own layout decides where each cache sits in the README's diagram, and the table's
+      # rows follow it. Without the drawing, the rows fall back to an approximation of it.
+      - name: Lay out the diagram
+        continue-on-error: true
+        env:
+          PUPPETEER_SKIP_DOWNLOAD: "1"
+          PUPPETEER_EXECUTABLE_PATH: /usr/bin/google-chrome
+        run: |
+          echo '{"args": ["--no-sandbox"]}' > "${RUNNER_TEMP}/puppeteer.json"
+          npx --yes @mermaid-js/mermaid-cli@11.4.2 --puppeteerConfigFile "${RUNNER_TEMP}/puppeteer.json" \
+            --input "${RUNNER_TEMP}/diagram.mmd" --output "${RUNNER_TEMP}/diagram.svg"
+
       - name: Draw the dashboard
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: python3 code/dashboard.py --output "${RUNNER_TEMP}/dashboard"
+        run: python3 code/dashboard.py --output "${RUNNER_TEMP}/dashboard" --layout "${RUNNER_TEMP}/diagram.svg"
 
       - name: Publish to the dashboard branch
         env:
