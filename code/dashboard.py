@@ -38,6 +38,7 @@ import os
 import pathlib
 import re
 import sys
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -57,6 +58,8 @@ RUN_LOG = re.compile(r"^logs/[a-z_]+_\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}Z\.log$"
 STORE_ARRAY = re.compile(r"^(derivatives/.+\.zarr)/stream/zarr\.json$")
 #: How many of the newest run logs to search for a progress line before giving up.
 LOGS_TO_SEARCH = 5
+#: Seconds to wait before each retry of a request GitHub failed to answer; one 502 used to end a run.
+RETRY_DELAYS = (5, 20, 60)
 
 
 def request(url: str, /) -> urllib.request.Request:
@@ -66,10 +69,25 @@ def request(url: str, /) -> urllib.request.Request:
     return urllib.request.Request(url, headers=headers)
 
 
+def open_url(url: str, /):
+    """Open a URL, retrying a server error, a rate limit or a dropped connection a few times."""
+    for delay in (*RETRY_DELAYS, None):
+        try:
+            return urllib.request.urlopen(request(url), timeout=60)
+        except urllib.error.HTTPError as error:
+            if delay is None or not (error.code >= 500 or error.code == 429):
+                raise
+        except (urllib.error.URLError, TimeoutError, ConnectionError):
+            if delay is None:
+                raise
+        print(f"Retrying {url} in {delay} s.", file=sys.stderr)
+        time.sleep(delay)
+
+
 def get(path: str, /) -> dict | list | None:
     """One API response, or `None` for a 404 (a branch or file that does not exist)."""
     try:
-        with urllib.request.urlopen(request(f"{API}{path}"), timeout=60) as response:
+        with open_url(f"{API}{path}") as response:
             return json.load(response)
     except urllib.error.HTTPError as error:
         if error.code == 404:
@@ -81,7 +99,7 @@ def get_all(path: str, /) -> list:
     """Every page of a listing."""
     items, url = [], f"{API}{path}"
     while url:
-        with urllib.request.urlopen(request(url), timeout=60) as response:
+        with open_url(url) as response:
             items += json.load(response)
             links = response.headers.get("Link", "")
         url = next((part.split(";")[0].strip("<> ") for part in links.split(",") if 'rel="next"' in part), None)
@@ -89,7 +107,7 @@ def get_all(path: str, /) -> list:
 
 
 def get_text(url: str, /) -> str:
-    with urllib.request.urlopen(request(url), timeout=60) as response:
+    with open_url(url) as response:
         return response.read().decode("utf-8", errors="replace")
 
 
