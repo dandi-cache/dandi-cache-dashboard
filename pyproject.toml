@@ -1,0 +1,12 @@
+[tool.black]
+line-length = 120
+target-version = ['py313']
+
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.lint]
+select = ["F", "E", "I"]
+
+[tool.codespell]
+skip = "*.svg"
