@@ -6,10 +6,6 @@ Download the table from [`dashboard.tsv`](https://raw.githubusercontent.com/dand
 
 ![DANDI caches](https://raw.githubusercontent.com/dandi-cache/dandi-cache-dashboard/dashboard/dashboard.svg)
 
-## How the caches feed each other
-
-Each arrow points from a cache's sourcedata to the cache built from it.
-
 ```mermaid
 flowchart LR
     archive[("DANDI archive")]
