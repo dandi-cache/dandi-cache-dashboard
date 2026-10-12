@@ -1,6 +1,6 @@
 # DANDI Cache (Dashboard)
 
-A quick reference for the current state of every [DANDI Cache](https://github.com/dandi-cache).
+A quick reference for the current state of all cache repositories.
 
 Download the table from [`dashboard.tsv`](https://raw.githubusercontent.com/dandi-cache/dandi-cache-dashboard/dashboard/dashboard.tsv).
 
