@@ -6,6 +6,9 @@ from the GitHub API and raw file URLs; nothing is cloned.
 A cache is any repository of the organization with a `cache.toml` at the root of its default branch,
 other than the template. For each one:
 
+- `sourcedata`: the caches its `cache.toml` declares as `[[inputs]]`. A cache with none reads the DANDI
+  archive itself.
+- `used_by`: the caches that declare it as an input.
 - `derivatives_data`: the bytes of data under `derivatives/` on the `derivatives` branch. A Zarr
   store counts the length of its array, which is the data it holds.
 - `derivatives_files`: the bytes of the files under `derivatives/`, as they sit on disk in a clone.
@@ -18,11 +21,13 @@ other than the template. For each one:
   A cache whose runs do not write one (an older library, or a cache that selects its own batch)
   shows a dash.
 
-Usage: `python3 code/dashboard.py --output <directory>`, which writes `dashboard.svg` and `dashboard.tsv`.
+Usage: `python3 code/dashboard.py --output <directory>`, which writes `dashboard.svg` and `dashboard.tsv`
+(lists joined by commas), or `python3 code/dashboard.py --mermaid` for the README's diagram of the inputs.
 `GITHUB_TOKEN`, when set, is sent with every API request.
 """
 
 import argparse
+import base64
 import csv
 import datetime
 import json
@@ -34,6 +39,8 @@ import urllib.error
 import urllib.parse
 import urllib.request
 from xml.sax.saxutils import escape
+
+import tomllib
 
 ORGANIZATION = "dandi-cache"
 API = "https://api.github.com"
@@ -93,15 +100,25 @@ def branch(repo: str, name: str, /) -> dict | None:
     return get(f"/repos/{ORGANIZATION}/{repo}/branches/{urllib.parse.quote(name)}")
 
 
-def caches() -> list[str]:
-    """The organization's caches: every live repository with a `cache.toml`, except the template."""
-    names = []
+def inputs(repo: str, /) -> list[str] | None:
+    """The caches a repository's `cache.toml` declares as inputs, or `None` if it has no `cache.toml`."""
+    found = get(f"/repos/{ORGANIZATION}/{repo}/contents/cache.toml")
+    if found is None:
+        return None
+    configuration = tomllib.loads(base64.b64decode(found["content"]).decode("utf-8"))
+    return [entry["name"] for entry in configuration.get("inputs", [])]
+
+
+def caches() -> dict[str, list[str]]:
+    """Every live repository of the organization with a `cache.toml`, except the template, with its inputs."""
+    found = {}
     for repo in get_all(f"/orgs/{ORGANIZATION}/repos?per_page=100&type=public"):
         if repo["archived"] or repo["is_template"]:
             continue
-        if get(f"/repos/{ORGANIZATION}/{repo['name']}/contents/cache.toml") is not None:
-            names.append(repo["name"])
-    return sorted(names)
+        declared = inputs(repo["name"])
+        if declared is not None:
+            found[repo["name"]] = declared
+    return dict(sorted(found.items()))
 
 
 def progress(repo: str, sha: str, blobs: list[dict], /) -> tuple[int, int] | None:
@@ -128,10 +145,12 @@ def derivatives_bytes(repo: str, sha: str, blobs: list[dict], /) -> tuple[int, i
     return data, sum(entry["size"] for entry in files)
 
 
-def describe(repo: str, /) -> dict:
+def describe(repo: str, sourcedata: list[str], used_by: list[str], /) -> dict:
     """One row of the table."""
     row = {
         "cache": repo,
+        "sourcedata": sourcedata,
+        "used_by": used_by,
         "derivatives_data": None,
         "derivatives_files": None,
         "dist_bytes": None,
@@ -162,14 +181,18 @@ def describe(repo: str, /) -> dict:
 # Drawing
 # ------------------------------------------------------------------------------------------------
 
-WIDTH = 1060
-ROW = 30
-TOP = 74
-#: Column anchors: the name from the left, the other columns and their titles centered.
-NAME_X, DATA_X, FILES_X, DIST_X, UPDATED_X = 24, 440, 550, 660, 790
+WIDTH = 1450
+#: A row's height when each of its cells is one line, and what each further line of a list adds.
+ROW, LINE = 30, 16
+TOP = 44
+#: Column anchors: the names from the left, the other columns and their titles centered.
+NAME_X, SOURCE_X, USED_BY_X = 24, 300, 530
+DATA_X, FILES_X, DIST_X, UPDATED_X = 830, 940, 1050, 1180
 #: The bar from its left edge and the percentage right-aligned, under a title centered on both.
-BAR_X, BAR_WIDTH, PERCENT_X = 906, 80, 1036
+BAR_X, BAR_WIDTH, PERCENT_X = 1296, 80, 1426
 PROCESSED_X = (BAR_X + PERCENT_X) // 2
+#: What reads the DANDI archive itself rather than another cache.
+ARCHIVE = "DANDI archive"
 
 STYLE = """
   svg { --surface: #fcfcfb; --text-primary: #0b0b0b; --text-secondary: #52514e; --muted: #898781;
@@ -182,6 +205,7 @@ STYLE = """
          fill: var(--text-primary); font-size: 13px; }
   .surface { fill: var(--surface); }
   .updated { fill: var(--text-secondary); font-size: 12px; }
+  .list { fill: var(--text-secondary); font-size: 12px; }
   .head { fill: var(--muted); font-size: 11px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; }
   .num { font-variant-numeric: tabular-nums; }
   .none { fill: var(--muted); }
@@ -212,15 +236,23 @@ def updated_text(timestamp: str | None, /) -> str:
     return moment.strftime("%Y-%m-%d %H:%M")
 
 
-def cell(x: int, baseline: int, value: str, anchor: str = "start", numeric: bool = False) -> str:
+def cell(x: int, baseline: int, value: str, anchor: str = "start", numeric: bool = False, listed: bool = False) -> str:
     """One table cell; a missing value, a dash, is drawn muted."""
-    classes = " ".join(name for name, on in (("num", numeric), ("none", value == "—")) if on)
+    flags = (("num", numeric), ("list", listed), ("none", value in ("—", ARCHIVE)))
+    classes = " ".join(name for name, on in flags if on)
     attribute = f' class="{classes}"' if classes else ""
     return f'<text x="{x}" y="{baseline}" text-anchor="{anchor}"{attribute}>{escape(value)}</text>'
 
 
+def stack(x: int, baseline: int, names: list[str], /) -> list[str]:
+    """A list of caches, one per line from the row's first baseline down."""
+    return [cell(x, baseline + LINE * index, name, listed=True) for index, name in enumerate(names)]
+
+
 def draw(rows: list[dict], now: datetime.datetime, /) -> str:
-    height = TOP + ROW * len(rows) + 20
+    heights = [ROW + LINE * (max(len(row["sourcedata"]), len(row["used_by"]), 1) - 1) for row in rows]
+    bottom = TOP + sum(heights)
+    height = bottom + 40
     lines = [
         (
             f'<svg xmlns="http://www.w3.org/2000/svg" width="{WIDTH}" height="{height}" viewBox="0 0 {WIDTH} {height}" '
@@ -228,14 +260,16 @@ def draw(rows: list[dict], now: datetime.datetime, /) -> str:
         ),
         '<title id="title">DANDI caches</title>',
         (
-            f'<desc id="desc">Size, last update and progress of {len(rows)} DANDI caches. '
+            f'<desc id="desc">Sources, size, last update and progress of {len(rows)} DANDI caches. '
             f"Updated {now:%Y-%m-%d %H:%M} UTC.</desc>"
         ),
         f"<style>{STYLE}</style>",
         f'<rect class="surface" width="{WIDTH}" height="{height}" rx="8"/>',
-        f'<text class="updated" x="{PERCENT_X}" y="28" text-anchor="end">'
+        f'<text class="updated" x="{PERCENT_X}" y="{height - 16}" text-anchor="end">'
         f"Table last updated: {now:%Y-%m-%d %H:%M} UTC</text>",
         f'<text class="head" x="{NAME_X}" y="{TOP - 12}">Cache</text>',
+        f'<text class="head" x="{SOURCE_X}" y="{TOP - 12}">Sourcedata</text>',
+        f'<text class="head" x="{USED_BY_X}" y="{TOP - 12}">Used by</text>',
         f'<text class="head" x="{DATA_X}" y="{TOP - 12}" text-anchor="middle">data</text>',
         f'<text class="head" x="{FILES_X}" y="{TOP - 12}" text-anchor="middle">on disk</text>',
         f'<text class="head" x="{DIST_X}" y="{TOP - 12}" text-anchor="middle">dist</text>',
@@ -243,10 +277,14 @@ def draw(rows: list[dict], now: datetime.datetime, /) -> str:
         f'<text class="head" x="{PROCESSED_X}" y="{TOP - 12}" text-anchor="middle">Processed</text>',
         f'<line class="rule" x1="{NAME_X}" x2="{PERCENT_X}" y1="{TOP - 6}" y2="{TOP - 6}"/>',
     ]
-    for index, row in enumerate(rows):
-        baseline = TOP + ROW * index + 19
+    top = TOP
+    for index, (row, row_height) in enumerate(zip(rows, heights)):
+        baseline = top + 19
         middle = baseline - 4
+        top += row_height
         lines.append(cell(NAME_X, baseline, row["cache"]))
+        lines += stack(SOURCE_X, baseline, row["sourcedata"] or [ARCHIVE])
+        lines += stack(USED_BY_X, baseline, row["used_by"] or ["—"])
         lines.append(cell(DATA_X, baseline, human_size(row["derivatives_data"]), "middle", numeric=True))
         lines.append(cell(FILES_X, baseline, human_size(row["derivatives_files"]), "middle", numeric=True))
         lines.append(cell(DIST_X, baseline, human_size(row["dist_bytes"]), "middle", numeric=True))
@@ -263,9 +301,7 @@ def draw(rows: list[dict], now: datetime.datetime, /) -> str:
         else:
             lines.append(cell(PROCESSED_X, baseline, "—", "middle"))
         if index < len(rows) - 1:
-            lines.append(
-                f'<line class="rule" x1="{NAME_X}" x2="{PERCENT_X}" y1="{baseline + 11}" y2="{baseline + 11}"/>'
-            )
+            lines.append(f'<line class="rule" x1="{NAME_X}" x2="{PERCENT_X}" y1="{top - 1}" y2="{top - 1}"/>')
     lines.append("</svg>")
     return "\n".join(lines) + "\n"
 
@@ -273,6 +309,8 @@ def draw(rows: list[dict], now: datetime.datetime, /) -> str:
 def write_tsv(rows: list[dict], path: pathlib.Path, /) -> None:
     fields = [
         "cache",
+        "sourcedata",
+        "used_by",
         "derivatives_data",
         "derivatives_files",
         "dist_bytes",
@@ -284,20 +322,39 @@ def write_tsv(rows: list[dict], path: pathlib.Path, /) -> None:
     with path.open("w", newline="") as stream:
         writer = csv.DictWriter(stream, fieldnames=fields, delimiter="\t", lineterminator="\n")
         writer.writeheader()
-        writer.writerows(rows)
+        writer.writerows(
+            {**row, "sourcedata": ",".join(row["sourcedata"]), "used_by": ",".join(row["used_by"])} for row in rows
+        )
+
+
+def mermaid(graph: dict[str, list[str]], /) -> str:
+    """A flowchart of which cache feeds which, from the DANDI archive down."""
+    nodes = sorted({*graph, *(source for sources in graph.values() for source in sources)})
+    lines = ["flowchart LR", f'    archive[("{ARCHIVE}")]']
+    lines += [f'    {node.replace("-", "_")}["{node}"]' for node in nodes]
+    for name, sources in graph.items():
+        for source in sources or ["archive"]:
+            lines.append(f'    {source.replace("-", "_")} --> {name.replace("-", "_")}')
+    return "\n".join(lines) + "\n"
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
-    parser.add_argument("--output", type=pathlib.Path, required=True, help="Where to write the SVG and the TSV.")
+    parser.add_argument("--output", type=pathlib.Path, help="Where to write the SVG and the TSV.")
+    parser.add_argument("--mermaid", action="store_true", help="Print the diagram of the inputs instead.")
     parser.add_argument("--cache", action="append", help="Only these caches (for trying it out); repeatable.")
     arguments = parser.parse_args()
+    if not arguments.mermaid and arguments.output is None:
+        parser.error("one of --output or --mermaid is required")
 
-    names = arguments.cache or caches()
+    graph = {name: inputs(name) or [] for name in arguments.cache} if arguments.cache else caches()
+    if arguments.mermaid:
+        print(mermaid(graph), end="")
+        return 0
     rows = []
-    for name in names:
+    for name, sources in graph.items():
         print(f"Reading {name}", file=sys.stderr)
-        rows.append(describe(name))
+        rows.append(describe(name, sources, sorted(user for user, used in graph.items() if name in used)))
     now = datetime.datetime.now(datetime.timezone.utc)
 
     arguments.output.mkdir(parents=True, exist_ok=True)
