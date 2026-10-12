@@ -20,6 +20,9 @@ other than the template. For each one:
   `run_incremental_update` writes to the run logs under `logs/` on the `derivatives` branch.
   A cache whose runs do not write one (an older library, or a cache that selects its own batch)
   shows a dash.
+- `end_to_end`: how much of the whole chain from the archive the cache has covered: its own fraction
+  times that of each cache upstream of it that reports one, so a cache done with its sourcedata while
+  that sourcedata is half done stands at half. Given only when it differs from the cache's own.
 
 Usage: `python3 code/dashboard.py --output <directory>`, which writes `dashboard.svg` and `dashboard.tsv`
 (lists joined by commas), or `python3 code/dashboard.py --mermaid` for the README's diagram of the inputs.
@@ -210,17 +213,19 @@ TOP = 44
 NAME_X, SOURCE_X, USED_BY_X = 24, 300, 530
 DATA_X, FILES_X, DIST_X, UPDATED_X = 830, 940, 1050, 1180
 #: The bar from its left edge and the percentage right-aligned, under a title centered on both.
-BAR_X, BAR_WIDTH, PERCENT_X = 1296, 80, 1426
+BAR_X, BAR_WIDTH, PERCENT_X = 1284, 80, 1426
 PROCESSED_X = (BAR_X + PERCENT_X) // 2
 #: What reads the DANDI archive itself rather than another cache.
 ARCHIVE = "DANDI archive"
 
 STYLE = """
   svg { --surface: #fcfcfb; --text-primary: #0b0b0b; --text-secondary: #52514e; --muted: #898781;
-        --grid: #e1e0d9; --track: #ecebe6; --series: #2a78d6; }
+        --grid: #e1e0d9; --track: #ecebe6; --series: #2a78d6;
+        --whole: #eb6834; }
   @media (prefers-color-scheme: dark) {
     svg { --surface: #1a1a19; --text-primary: #f0efec; --text-secondary: #c3c2b7; --muted: #898781;
-          --grid: #2c2c2a; --track: #2c2c2a; --series: #3987e5; }
+          --grid: #2c2c2a; --track: #2c2c2a; --series: #3987e5;
+          --whole: #d95926; }
   }
   text { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
          fill: var(--text-primary); font-size: 13px; }
@@ -233,6 +238,7 @@ STYLE = """
   .rule { stroke: var(--grid); stroke-width: 1; }
   .track { fill: var(--track); }
   .bar { fill: var(--series); }
+  .whole { fill: var(--whole); }
 """
 
 
@@ -270,8 +276,49 @@ def stack(x: int, baseline: int, names: list[str], /) -> list[str]:
     return [cell(x, baseline + LINE * index, name, listed=True) for index, name in enumerate(names)]
 
 
+def meter(baseline: int, fraction: float, kind: str, /) -> list[str]:
+    """A bar of the Processed column with its percentage, on one line of a row."""
+    middle = baseline - 4
+    parts = [f'<rect class="track" x="{BAR_X}" y="{middle - 4}" width="{BAR_WIDTH}" height="8" rx="4"/>']
+    if fraction > 0:
+        width = max(BAR_WIDTH * fraction, 8)
+        parts.append(f'<rect class="{kind}" x="{BAR_X}" y="{middle - 4}" width="{width:.1f}" height="8" rx="4"/>')
+    return [*parts, cell(PERCENT_X, baseline, f"{100 * fraction:.1f}%", "end", numeric=True)]
+
+
+def own_fraction(row: dict, /) -> float | None:
+    return min(row["recorded"] / row["candidates"], 1.0) if row["candidates"] else None
+
+
+def add_end_to_end(rows: list[dict], /) -> None:
+    """Set each row's `end_to_end`: its own fraction times the end-to-end fraction of each of its inputs.
+
+    An input that reports no fraction counts as whole, as nothing says otherwise. A row gets a value only
+    when it reports a fraction of its own and something upstream is not whole.
+    """
+    by_name = {row["cache"]: row for row in rows}
+    whole: dict[str, float] = {}
+
+    def through(name: str, /) -> float:
+        if name not in whole:
+            row = by_name[name]
+            whole[name] = own_fraction(row) or 1.0
+            for source in row["sourcedata"]:
+                if source in by_name:
+                    whole[name] *= through(source)
+        return whole[name]
+
+    for row in rows:
+        own = own_fraction(row)
+        row["end_to_end"] = through(row["cache"]) if own is not None and through(row["cache"]) < own else None
+
+
 def draw(rows: list[dict], now: datetime.datetime, /) -> str:
-    heights = [ROW + LINE * (max(len(row["sourcedata"]), len(row["used_by"]), 1) - 1) for row in rows]
+    heights = [
+        ROW
+        + LINE * (max(len(row["sourcedata"]), len(row["used_by"]), 2 if row.get("end_to_end") is not None else 1) - 1)
+        for row in rows
+    ]
     bottom = TOP + sum(heights)
     height = bottom + 40
     lines = [
@@ -288,6 +335,11 @@ def draw(rows: list[dict], now: datetime.datetime, /) -> str:
         f'<rect class="surface" width="{WIDTH}" height="{height}" rx="8"/>',
         f'<text class="updated" x="{PERCENT_X}" y="{height - 16}" text-anchor="end">'
         f"Table last updated: {now:%Y-%m-%d %H:%M} UTC</text>",
+        f'<rect class="bar" x="{NAME_X}" y="{height - 25}" width="10" height="10" rx="2"/>',
+        f'<text class="updated" x="{NAME_X + 16}" y="{height - 16}">Processed of its sourcedata</text>',
+        f'<rect class="whole" x="{NAME_X + 200}" y="{height - 25}" width="10" height="10" rx="2"/>',
+        f'<text class="updated" x="{NAME_X + 216}" y="{height - 16}">'
+        "Processed end to end, through every cache upstream of it</text>",
         f'<text class="head" x="{NAME_X}" y="{TOP - 12}">Cache</text>',
         f'<text class="head" x="{SOURCE_X}" y="{TOP - 12}">Sourcedata</text>',
         f'<text class="head" x="{USED_BY_X}" y="{TOP - 12}">Used by</text>',
@@ -301,7 +353,6 @@ def draw(rows: list[dict], now: datetime.datetime, /) -> str:
     top = TOP
     for index, (row, row_height) in enumerate(zip(rows, heights)):
         baseline = top + 19
-        middle = baseline - 4
         top += row_height
         lines.append(cell(NAME_X, baseline, row["cache"]))
         lines += stack(SOURCE_X, baseline, row["sourcedata"] or [ARCHIVE])
@@ -310,15 +361,10 @@ def draw(rows: list[dict], now: datetime.datetime, /) -> str:
         lines.append(cell(FILES_X, baseline, human_size(row["derivatives_files"]), "middle", numeric=True))
         lines.append(cell(DIST_X, baseline, human_size(row["dist_bytes"]), "middle", numeric=True))
         lines.append(cell(UPDATED_X, baseline, updated_text(row["updated"]), "middle", numeric=True))
-        if row["candidates"]:
-            fraction = min(row["recorded"] / row["candidates"], 1.0)
-            lines.append(f'<rect class="track" x="{BAR_X}" y="{middle - 4}" width="{BAR_WIDTH}" height="8" rx="4"/>')
-            if fraction > 0:
-                lines.append(
-                    f'<rect class="bar" x="{BAR_X}" y="{middle - 4}" width="{max(BAR_WIDTH * fraction, 8):.1f}" '
-                    f'height="8" rx="4"/>'
-                )
-            lines.append(cell(PERCENT_X, baseline, f"{100 * fraction:.1f}%", "end", numeric=True))
+        if (own := own_fraction(row)) is not None:
+            lines += meter(baseline, own, "bar")
+            if row.get("end_to_end") is not None:
+                lines += meter(baseline + LINE, row["end_to_end"], "whole")
         else:
             lines.append(cell(PROCESSED_X, baseline, "—", "middle"))
         if index < len(rows) - 1:
@@ -338,13 +384,20 @@ def write_tsv(rows: list[dict], path: pathlib.Path, /) -> None:
         "updated",
         "recorded",
         "candidates",
+        "end_to_end",
         "truncated",
     ]
     with path.open("w", newline="") as stream:
         writer = csv.DictWriter(stream, fieldnames=fields, delimiter="\t", lineterminator="\n")
         writer.writeheader()
         writer.writerows(
-            {**row, "sourcedata": ",".join(row["sourcedata"]), "used_by": ",".join(row["used_by"])} for row in rows
+            {
+                **row,
+                "sourcedata": ",".join(row["sourcedata"]),
+                "used_by": ",".join(row["used_by"]),
+                "end_to_end": None if row.get("end_to_end") is None else round(row["end_to_end"], 4),
+            }
+            for row in rows
         )
 
 
@@ -402,6 +455,7 @@ def main() -> int:
     for name, sources in graph.items():
         print(f"Reading {name}", file=sys.stderr)
         rows.append(describe(name, sources, sorted(user for user, used in graph.items() if name in used)))
+    add_end_to_end(rows)
     now = datetime.datetime.now(datetime.timezone.utc)
 
     arguments.output.mkdir(parents=True, exist_ok=True)
