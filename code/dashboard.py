@@ -337,9 +337,16 @@ def draw(rows: list[dict], now: datetime.datetime, /) -> str:
         f"Table last updated: {now:%Y-%m-%d %H:%M} UTC</text>",
         f'<rect class="bar" x="{NAME_X}" y="{height - 25}" width="10" height="10" rx="2"/>',
         f'<text class="updated" x="{NAME_X + 16}" y="{height - 16}">Processed of its sourcedata</text>',
-        f'<rect class="whole" x="{NAME_X + 200}" y="{height - 25}" width="10" height="10" rx="2"/>',
-        f'<text class="updated" x="{NAME_X + 216}" y="{height - 16}">'
-        "Processed end to end, through every cache upstream of it</text>",
+    ]
+    # The end-to-end bar is drawn only where it is lower than the cache's own, so once everything upstream
+    # is done there is none, and a legend entry for it would describe nothing on the table.
+    if any(row.get("end_to_end") is not None for row in rows):
+        lines += [
+            f'<rect class="whole" x="{NAME_X + 200}" y="{height - 25}" width="10" height="10" rx="2"/>',
+            f'<text class="updated" x="{NAME_X + 216}" y="{height - 16}">'
+            "Processed end to end, through every cache upstream of it</text>",
+        ]
+    lines += [
         f'<text class="head" x="{NAME_X}" y="{TOP - 12}">Cache</text>',
         f'<text class="head" x="{SOURCE_X}" y="{TOP - 12}">Sourcedata</text>',
         f'<text class="head" x="{USED_BY_X}" y="{TOP - 12}">Used by</text>',
