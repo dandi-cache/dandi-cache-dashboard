@@ -1,0 +1,240 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1450" height="880" viewBox="0 0 1450 880" role="img" aria-labelledby="title desc">
+<title id="title">DANDI caches</title>
+<desc id="desc">Sources, size, last update and progress of 18 DANDI caches. Updated 2026-10-17 13:49 UTC.</desc>
+<style>
+  svg { --surface: #fcfcfb; --text-primary: #0b0b0b; --text-secondary: #52514e; --muted: #898781;
+        --grid: #e1e0d9; --track: #ecebe6; --series: #2a78d6;
+        --whole: #eb6834; }
+  @media (prefers-color-scheme: dark) {
+    svg { --surface: #1a1a19; --text-primary: #f0efec; --text-secondary: #c3c2b7; --muted: #898781;
+          --grid: #2c2c2a; --track: #2c2c2a; --series: #3987e5;
+          --whole: #d95926; }
+  }
+  text { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+         fill: var(--text-primary); font-size: 13px; }
+  .surface { fill: var(--surface); }
+  .updated { fill: var(--text-secondary); font-size: 12px; }
+  .list { fill: var(--text-secondary); font-size: 12px; }
+  .head { fill: var(--muted); font-size: 11px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; }
+  .num { font-variant-numeric: tabular-nums; }
+  .none { fill: var(--muted); }
+  .rule { stroke: var(--grid); stroke-width: 1; }
+  .track { fill: var(--track); }
+  .bar { fill: var(--series); }
+  .whole { fill: var(--whole); }
+</style>
+<rect class="surface" width="1450" height="880" rx="8"/>
+<text class="updated" x="1426" y="864" text-anchor="end">Table last updated: 2026-10-17 13:49 UTC</text>
+<rect class="bar" x="24" y="855" width="10" height="10" rx="2"/>
+<text class="updated" x="40" y="864">Processed of its sourcedata</text>
+<rect class="whole" x="224" y="855" width="10" height="10" rx="2"/>
+<text class="updated" x="240" y="864">Processed end to end, through every cache upstream of it</text>
+<text class="head" x="24" y="32">Cache</text>
+<text class="head" x="300" y="32">Sourcedata</text>
+<text class="head" x="530" y="32">Used by</text>
+<text class="head" x="830" y="32" text-anchor="middle">data</text>
+<text class="head" x="940" y="32" text-anchor="middle">on disk</text>
+<text class="head" x="1050" y="32" text-anchor="middle">dist</text>
+<text class="head" x="1180" y="32" text-anchor="middle">Cache last updated (UTC)</text>
+<text class="head" x="1355" y="32" text-anchor="middle">Processed</text>
+<line class="rule" x1="24" x2="1426" y1="38" y2="38"/>
+<text x="24" y="63" text-anchor="start">content-id-to-dandiset-paths</text>
+<text x="300" y="63" text-anchor="start" class="list none">DANDI archive</text>
+<text x="530" y="63" text-anchor="start" class="list">content-id-to-usage-dandiset-path</text>
+<text x="830" y="63" text-anchor="middle" class="num">109 MB</text>
+<text x="940" y="63" text-anchor="middle" class="num">240 MB</text>
+<text x="1050" y="63" text-anchor="middle" class="num">26.3 MB</text>
+<text x="1180" y="63" text-anchor="middle" class="num">2026-10-17 10:32</text>
+<text x="1355" y="63" text-anchor="middle" class="none">—</text>
+<line class="rule" x1="24" x2="1426" y1="73" y2="73"/>
+<text x="24" y="93" text-anchor="start">dandiset-id-to-number-of-assets</text>
+<text x="300" y="93" text-anchor="start" class="list none">DANDI archive</text>
+<text x="530" y="93" text-anchor="start" class="list none">—</text>
+<text x="830" y="93" text-anchor="middle" class="num">238 kB</text>
+<text x="940" y="93" text-anchor="middle" class="num">160 MB</text>
+<text x="1050" y="93" text-anchor="middle" class="num">7.37 kB</text>
+<text x="1180" y="93" text-anchor="middle" class="num">2026-10-17 10:43</text>
+<rect class="track" x="1284" y="85" width="80" height="8" rx="4"/>
+<rect class="bar" x="1284" y="85" width="80.0" height="8" rx="4"/>
+<text x="1426" y="93" text-anchor="end" class="num">100.0%</text>
+<line class="rule" x1="24" x2="1426" y1="103" y2="103"/>
+<text x="24" y="123" text-anchor="start">dandiset-id-to-title</text>
+<text x="300" y="123" text-anchor="start" class="list none">DANDI archive</text>
+<text x="530" y="123" text-anchor="start" class="list none">—</text>
+<text x="830" y="123" text-anchor="middle" class="num">302 kB</text>
+<text x="940" y="123" text-anchor="middle" class="num">160 MB</text>
+<text x="1050" y="123" text-anchor="middle" class="num">29.3 kB</text>
+<text x="1180" y="123" text-anchor="middle" class="num">2026-10-17 10:34</text>
+<rect class="track" x="1284" y="115" width="80" height="8" rx="4"/>
+<rect class="bar" x="1284" y="115" width="80.0" height="8" rx="4"/>
+<text x="1426" y="123" text-anchor="end" class="num">100.0%</text>
+<line class="rule" x1="24" x2="1426" y1="133" y2="133"/>
+<text x="24" y="153" text-anchor="start">content-id-to-usage-dandiset-path</text>
+<text x="300" y="153" text-anchor="start" class="list">content-id-to-dandiset-paths</text>
+<text x="530" y="153" text-anchor="start" class="list">content-id-to-nwb-file</text>
+<text x="530" y="169" text-anchor="start" class="list">dandiset-id-to-total-size</text>
+<text x="530" y="185" text-anchor="start" class="list">qualifying-aind-content-ids</text>
+<text x="530" y="201" text-anchor="start" class="list">usage-dandiset-path-to-asset-size</text>
+<text x="830" y="153" text-anchor="middle" class="num">102 MB</text>
+<text x="940" y="153" text-anchor="middle" class="num">242 MB</text>
+<text x="1050" y="153" text-anchor="middle" class="num">26.0 MB</text>
+<text x="1180" y="153" text-anchor="middle" class="num">2026-10-17 11:09</text>
+<text x="1355" y="153" text-anchor="middle" class="none">—</text>
+<line class="rule" x1="24" x2="1426" y1="211" y2="211"/>
+<text x="24" y="231" text-anchor="start">content-id-to-nwb-file</text>
+<text x="300" y="231" text-anchor="start" class="list">content-id-to-usage-dandiset-path</text>
+<text x="530" y="231" text-anchor="start" class="list">content-id-to-valid-nwb-file</text>
+<text x="530" y="247" text-anchor="start" class="list">qualifying-lfp-content-ids</text>
+<text x="830" y="231" text-anchor="middle" class="num">29.1 MB</text>
+<text x="940" y="231" text-anchor="middle" class="num">80.0 MB</text>
+<text x="1050" y="231" text-anchor="middle" class="num">9.77 MB</text>
+<text x="1180" y="231" text-anchor="middle" class="num">2026-10-17 11:33</text>
+<text x="1355" y="231" text-anchor="middle" class="none">—</text>
+<line class="rule" x1="24" x2="1426" y1="257" y2="257"/>
+<text x="24" y="277" text-anchor="start">usage-dandiset-path-to-asset-size</text>
+<text x="300" y="277" text-anchor="start" class="list">content-id-to-usage-dandiset-path</text>
+<text x="530" y="277" text-anchor="start" class="list">dandiset-id-to-total-size</text>
+<text x="830" y="277" text-anchor="middle" class="num">30.0 MB</text>
+<text x="940" y="277" text-anchor="middle" class="num">80.0 MB</text>
+<text x="1050" y="277" text-anchor="middle" class="num">14.9 MB</text>
+<text x="1180" y="277" text-anchor="middle" class="num">2026-10-17 11:41</text>
+<text x="1355" y="277" text-anchor="middle" class="none">—</text>
+<line class="rule" x1="24" x2="1426" y1="287" y2="287"/>
+<text x="24" y="307" text-anchor="start">content-id-to-valid-nwb-file</text>
+<text x="300" y="307" text-anchor="start" class="list">content-id-to-nwb-file</text>
+<text x="530" y="307" text-anchor="start" class="list">qualifying-aind-content-ids</text>
+<text x="530" y="323" text-anchor="start" class="list">qualifying-lfp-content-ids</text>
+<text x="530" y="339" text-anchor="start" class="list">valid-nwb-file-to-array-sizes</text>
+<text x="530" y="355" text-anchor="start" class="list">valid-nwb-file-to-chunk-stats</text>
+<text x="530" y="371" text-anchor="start" class="list">valid-nwb-file-to-cophenetic-index</text>
+<text x="530" y="387" text-anchor="start" class="list">valid-nwb-file-to-number-of-datasets</text>
+<text x="530" y="403" text-anchor="start" class="list">valid-nwb-file-to-number-of-groups</text>
+<text x="530" y="419" text-anchor="start" class="list">valid-nwb-file-to-out-degrees</text>
+<text x="530" y="435" text-anchor="start" class="list">valid-nwb-file-to-sackin-index</text>
+<text x="830" y="307" text-anchor="middle" class="num">184 MB</text>
+<text x="940" y="307" text-anchor="middle" class="num">320 MB</text>
+<text x="1050" y="307" text-anchor="middle" class="num">20.8 MB</text>
+<text x="1180" y="307" text-anchor="middle" class="num">2026-10-17 07:12</text>
+<text x="1355" y="307" text-anchor="middle" class="none">—</text>
+<line class="rule" x1="24" x2="1426" y1="445" y2="445"/>
+<text x="24" y="465" text-anchor="start">dandiset-id-to-total-size</text>
+<text x="300" y="465" text-anchor="start" class="list">content-id-to-usage-dandiset-path</text>
+<text x="300" y="481" text-anchor="start" class="list">usage-dandiset-path-to-asset-size</text>
+<text x="530" y="465" text-anchor="start" class="list none">—</text>
+<text x="830" y="465" text-anchor="middle" class="num">18.3 kB</text>
+<text x="940" y="465" text-anchor="middle" class="num">80.0 MB</text>
+<text x="1050" y="465" text-anchor="middle" class="num">6.91 kB</text>
+<text x="1180" y="465" text-anchor="middle" class="num">2026-10-17 11:47</text>
+<text x="1355" y="465" text-anchor="middle" class="none">—</text>
+<line class="rule" x1="24" x2="1426" y1="491" y2="491"/>
+<text x="24" y="511" text-anchor="start">qualifying-lfp-content-ids</text>
+<text x="300" y="511" text-anchor="start" class="list">content-id-to-valid-nwb-file</text>
+<text x="300" y="527" text-anchor="start" class="list">content-id-to-nwb-file</text>
+<text x="530" y="511" text-anchor="start" class="list">qualifying-aind-content-ids</text>
+<text x="830" y="511" text-anchor="middle" class="num">8.06 MB</text>
+<text x="940" y="511" text-anchor="middle" class="num">130 MB</text>
+<text x="1050" y="511" text-anchor="middle" class="num">3.59 MB</text>
+<text x="1180" y="511" text-anchor="middle" class="num">2026-10-17 12:15</text>
+<rect class="track" x="1284" y="503" width="80" height="8" rx="4"/>
+<rect class="bar" x="1284" y="503" width="80.0" height="8" rx="4"/>
+<text x="1426" y="511" text-anchor="end" class="num">100.0%</text>
+<line class="rule" x1="24" x2="1426" y1="537" y2="537"/>
+<text x="24" y="557" text-anchor="start">valid-nwb-file-to-array-sizes</text>
+<text x="300" y="557" text-anchor="start" class="list">content-id-to-valid-nwb-file</text>
+<text x="530" y="557" text-anchor="start" class="list">valid-nwb-file-to-byte-weighted-structure</text>
+<text x="830" y="557" text-anchor="middle" class="num">14.3 GB</text>
+<text x="940" y="557" text-anchor="middle" class="num">14.3 GB</text>
+<text x="1050" y="557" text-anchor="middle" class="num">533 MB</text>
+<text x="1180" y="557" text-anchor="middle" class="num">2026-10-17 13:03</text>
+<rect class="track" x="1284" y="549" width="80" height="8" rx="4"/>
+<rect class="bar" x="1284" y="549" width="80.0" height="8" rx="4"/>
+<text x="1426" y="557" text-anchor="end" class="num">100.0%</text>
+<line class="rule" x1="24" x2="1426" y1="567" y2="567"/>
+<text x="24" y="587" text-anchor="start">valid-nwb-file-to-chunk-stats</text>
+<text x="300" y="587" text-anchor="start" class="list">content-id-to-valid-nwb-file</text>
+<text x="530" y="587" text-anchor="start" class="list none">—</text>
+<text x="830" y="587" text-anchor="middle" class="num">37.8 MB</text>
+<text x="940" y="587" text-anchor="middle" class="num">80.0 MB</text>
+<text x="1050" y="587" text-anchor="middle" class="num">5.32 MB</text>
+<text x="1180" y="587" text-anchor="middle" class="num">2026-10-17 13:10</text>
+<rect class="track" x="1284" y="579" width="80" height="8" rx="4"/>
+<rect class="bar" x="1284" y="579" width="75.0" height="8" rx="4"/>
+<text x="1426" y="587" text-anchor="end" class="num">93.8%</text>
+<line class="rule" x1="24" x2="1426" y1="597" y2="597"/>
+<text x="24" y="617" text-anchor="start">valid-nwb-file-to-cophenetic-index</text>
+<text x="300" y="617" text-anchor="start" class="list">content-id-to-valid-nwb-file</text>
+<text x="530" y="617" text-anchor="start" class="list none">—</text>
+<text x="830" y="617" text-anchor="middle" class="num">8.04 MB</text>
+<text x="940" y="617" text-anchor="middle" class="num">80.0 MB</text>
+<text x="1050" y="617" text-anchor="middle" class="num">3.93 MB</text>
+<text x="1180" y="617" text-anchor="middle" class="num">2026-10-17 11:13</text>
+<rect class="track" x="1284" y="609" width="80" height="8" rx="4"/>
+<rect class="bar" x="1284" y="609" width="80.0" height="8" rx="4"/>
+<text x="1426" y="617" text-anchor="end" class="num">100.0%</text>
+<line class="rule" x1="24" x2="1426" y1="627" y2="627"/>
+<text x="24" y="647" text-anchor="start">valid-nwb-file-to-number-of-datasets</text>
+<text x="300" y="647" text-anchor="start" class="list">content-id-to-valid-nwb-file</text>
+<text x="530" y="647" text-anchor="start" class="list none">—</text>
+<text x="830" y="647" text-anchor="middle" class="num">7.80 MB</text>
+<text x="940" y="647" text-anchor="middle" class="num">80.0 MB</text>
+<text x="1050" y="647" text-anchor="middle" class="num">3.85 MB</text>
+<text x="1180" y="647" text-anchor="middle" class="num">2026-10-17 13:43</text>
+<rect class="track" x="1284" y="639" width="80" height="8" rx="4"/>
+<rect class="bar" x="1284" y="639" width="80.0" height="8" rx="4"/>
+<text x="1426" y="647" text-anchor="end" class="num">100.0%</text>
+<line class="rule" x1="24" x2="1426" y1="657" y2="657"/>
+<text x="24" y="677" text-anchor="start">valid-nwb-file-to-number-of-groups</text>
+<text x="300" y="677" text-anchor="start" class="list">content-id-to-valid-nwb-file</text>
+<text x="530" y="677" text-anchor="start" class="list none">—</text>
+<text x="830" y="677" text-anchor="middle" class="num">7.75 MB</text>
+<text x="940" y="677" text-anchor="middle" class="num">80.0 MB</text>
+<text x="1050" y="677" text-anchor="middle" class="num">3.82 MB</text>
+<text x="1180" y="677" text-anchor="middle" class="num">2026-10-17 10:55</text>
+<rect class="track" x="1284" y="669" width="80" height="8" rx="4"/>
+<rect class="bar" x="1284" y="669" width="80.0" height="8" rx="4"/>
+<text x="1426" y="677" text-anchor="end" class="num">100.0%</text>
+<line class="rule" x1="24" x2="1426" y1="687" y2="687"/>
+<text x="24" y="707" text-anchor="start">valid-nwb-file-to-out-degrees</text>
+<text x="300" y="707" text-anchor="start" class="list">content-id-to-valid-nwb-file</text>
+<text x="530" y="707" text-anchor="start" class="list none">—</text>
+<text x="830" y="707" text-anchor="middle" class="num">33.3 MB</text>
+<text x="940" y="707" text-anchor="middle" class="num">80.0 MB</text>
+<text x="1050" y="707" text-anchor="middle" class="num">5.58 MB</text>
+<text x="1180" y="707" text-anchor="middle" class="num">2026-10-17 11:16</text>
+<rect class="track" x="1284" y="699" width="80" height="8" rx="4"/>
+<rect class="bar" x="1284" y="699" width="80.0" height="8" rx="4"/>
+<text x="1426" y="707" text-anchor="end" class="num">100.0%</text>
+<line class="rule" x1="24" x2="1426" y1="717" y2="717"/>
+<text x="24" y="737" text-anchor="start">valid-nwb-file-to-sackin-index</text>
+<text x="300" y="737" text-anchor="start" class="list">content-id-to-valid-nwb-file</text>
+<text x="530" y="737" text-anchor="start" class="list none">—</text>
+<text x="830" y="737" text-anchor="middle" class="num">10.8 MB</text>
+<text x="940" y="737" text-anchor="middle" class="num">80.0 MB</text>
+<text x="1050" y="737" text-anchor="middle" class="num">4.34 MB</text>
+<text x="1180" y="737" text-anchor="middle" class="num">2026-10-17 11:04</text>
+<rect class="track" x="1284" y="729" width="80" height="8" rx="4"/>
+<rect class="bar" x="1284" y="729" width="80.0" height="8" rx="4"/>
+<text x="1426" y="737" text-anchor="end" class="num">100.0%</text>
+<line class="rule" x1="24" x2="1426" y1="747" y2="747"/>
+<text x="24" y="767" text-anchor="start">qualifying-aind-content-ids</text>
+<text x="300" y="767" text-anchor="start" class="list">qualifying-lfp-content-ids</text>
+<text x="300" y="783" text-anchor="start" class="list">content-id-to-usage-dandiset-path</text>
+<text x="300" y="799" text-anchor="start" class="list">content-id-to-valid-nwb-file</text>
+<text x="530" y="767" text-anchor="start" class="list none">—</text>
+<text x="830" y="767" text-anchor="middle" class="num">151 kB</text>
+<text x="940" y="767" text-anchor="middle" class="num">130 MB</text>
+<text x="1050" y="767" text-anchor="middle" class="num">72.8 kB</text>
+<text x="1180" y="767" text-anchor="middle" class="num">2026-10-17 12:30</text>
+<rect class="track" x="1284" y="759" width="80" height="8" rx="4"/>
+<rect class="bar" x="1284" y="759" width="80.0" height="8" rx="4"/>
+<text x="1426" y="767" text-anchor="end" class="num">100.0%</text>
+<line class="rule" x1="24" x2="1426" y1="809" y2="809"/>
+<text x="24" y="829" text-anchor="start">valid-nwb-file-to-byte-weighted-structure</text>
+<text x="300" y="829" text-anchor="start" class="list">valid-nwb-file-to-array-sizes</text>
+<text x="530" y="829" text-anchor="start" class="list none">—</text>
+<text x="830" y="829" text-anchor="middle" class="num">106 kB</text>
+<text x="940" y="829" text-anchor="middle" class="num">106 kB</text>
+<text x="1050" y="829" text-anchor="middle" class="num">27.1 kB</text>
+<text x="1180" y="829" text-anchor="middle" class="num">2026-10-07 03:22</text>
+<text x="1355" y="829" text-anchor="middle" class="none">—</text>
+</svg>
