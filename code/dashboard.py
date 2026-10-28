@@ -15,7 +15,8 @@ other than the template. For each one:
   This is the data plus the newlines padding each store's last chunk file to the full chunk size,
   which can make a store of a few kilobytes take tens of megabytes.
 - `dist`: the bytes of the whole `dist` branch, which holds only what is published.
-- `updated`: when the `derivatives` branch last moved.
+- `updated`: when the `derivatives` branch last moved. The drawing colors it by its age when drawn, from
+  green when just updated through amber to red once it is `STALE`.
 - `progress`: the last `Progress: <recorded> of <candidates> candidates recorded` line that
   `run_incremental_update` writes to the run logs under `logs/` on the `derivatives` branch.
   A cache whose runs do not write one (an older library, or a cache that selects its own batch)
@@ -37,6 +38,7 @@ import base64
 import csv
 import datetime
 import json
+import math
 import os
 import pathlib
 import re
@@ -217,6 +219,13 @@ BAR_X, BAR_WIDTH, PERCENT_X = 1284, 80, 1426
 PROCESSED_X = (BAR_X + PERCENT_X) // 2
 #: What reads the DANDI archive itself rather than another cache.
 ARCHIVE = "DANDI archive"
+#: How old a cache's last update is when its date is drawn fully red; a newer one runs through amber to green.
+STALE = datetime.timedelta(days=3)
+#: The OKLCH hues of a date just updated and of one `STALE` or older, and the lightness and chroma it is drawn
+#: with on each surface. One lightness for every hue keeps every age as legible: 4.5:1 or more against the light
+#: surface and 6.5:1 against the dark.
+FRESH_HUE, STALE_HUE = 145, 29
+AGE_LIGHT, AGE_DARK = (0.53, 0.15), (0.72, 0.17)
 
 STYLE = """
   svg { --surface: #fcfcfb; --text-primary: #0b0b0b; --text-secondary: #52514e; --muted: #898781;
@@ -239,6 +248,8 @@ STYLE = """
   .track { fill: var(--track); }
   .bar { fill: var(--series); }
   .whole { fill: var(--whole); }
+  .age { fill: var(--age); font-weight: 600; }
+  @media (prefers-color-scheme: dark) { .age { fill: var(--age-dark); } }
 """
 
 
@@ -256,18 +267,50 @@ def human_size(size: int | None, /) -> str:
     return f"{rounded:,.{decimals}f} {unit}"
 
 
+def moment(timestamp: str, /) -> datetime.datetime:
+    return datetime.datetime.fromisoformat(timestamp.replace("Z", "+00:00"))
+
+
 def updated_text(timestamp: str | None, /) -> str:
-    if timestamp is None:
-        return "—"
-    moment = datetime.datetime.fromisoformat(timestamp.replace("Z", "+00:00"))
-    return moment.strftime("%Y-%m-%d %H:%M")
+    return "—" if timestamp is None else f"{moment(timestamp):%Y-%m-%d %H:%M}"
 
 
-def cell(x: int, baseline: int, value: str, anchor: str = "start", numeric: bool = False, listed: bool = False) -> str:
-    """One table cell; a missing value, a dash, is drawn muted."""
-    flags = (("num", numeric), ("list", listed), ("none", value in ("—", ARCHIVE)))
+def staleness(timestamp: str | None, now: datetime.datetime, /) -> float | None:
+    """How far a cache's last update is toward `STALE` when the table is drawn, from 0 to 1."""
+    return None if timestamp is None else min(max((now - moment(timestamp)) / STALE, 0.0), 1.0)
+
+
+def oklch(lightness: float, chroma: float, hue: float, /) -> str:
+    """An OKLCH color as sRGB hex, clipping a channel that falls outside the gamut."""
+    a, b = chroma * math.cos(math.radians(hue)), chroma * math.sin(math.radians(hue))
+    long = (lightness + 0.3963377774 * a + 0.2158037573 * b) ** 3
+    medium = (lightness - 0.1055613458 * a - 0.0638541728 * b) ** 3
+    short = (lightness - 0.0894841775 * a - 1.2914855480 * b) ** 3
+    linear = (
+        4.0767416621 * long - 3.3077115913 * medium + 0.2309699292 * short,
+        -1.2684380046 * long + 2.6097574011 * medium - 0.3413193965 * short,
+        -0.0041960863 * long - 0.7034186147 * medium + 1.7076147010 * short,
+    )
+    encoded = (12.92 * v if v <= 0.0031308 else 1.055 * v ** (1 / 2.4) - 0.055 for v in linear)
+    return "#" + "".join(f"{round(255 * min(max(v, 0.0), 1.0)):02x}" for v in encoded)
+
+
+def cell(
+    x: int,
+    baseline: int,
+    value: str,
+    anchor: str = "start",
+    numeric: bool = False,
+    listed: bool = False,
+    age: float | None = None,
+) -> str:
+    """One table cell; a missing value, a dash, is drawn muted, and one with an `age` from green to red."""
+    flags = (("num", numeric), ("list", listed), ("none", value in ("—", ARCHIVE)), ("age", age is not None))
     classes = " ".join(name for name, on in flags if on)
     attribute = f' class="{classes}"' if classes else ""
+    if age is not None:
+        hue = FRESH_HUE + (STALE_HUE - FRESH_HUE) * age
+        attribute += f' style="--age: {oklch(*AGE_LIGHT, hue)}; --age-dark: {oklch(*AGE_DARK, hue)}"'
     return f'<text x="{x}" y="{baseline}" text-anchor="{anchor}"{attribute}>{escape(value)}</text>'
 
 
@@ -367,7 +410,8 @@ def draw(rows: list[dict], now: datetime.datetime, /) -> str:
         lines.append(cell(DATA_X, baseline, human_size(row["derivatives_data"]), "middle", numeric=True))
         lines.append(cell(FILES_X, baseline, human_size(row["derivatives_files"]), "middle", numeric=True))
         lines.append(cell(DIST_X, baseline, human_size(row["dist_bytes"]), "middle", numeric=True))
-        lines.append(cell(UPDATED_X, baseline, updated_text(row["updated"]), "middle", numeric=True))
+        updated = updated_text(row["updated"])
+        lines.append(cell(UPDATED_X, baseline, updated, "middle", numeric=True, age=staleness(row["updated"], now)))
         if (own := own_fraction(row)) is not None:
             lines += meter(baseline, own, "bar")
             if row.get("end_to_end") is not None:
