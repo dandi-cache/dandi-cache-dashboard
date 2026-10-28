@@ -9,7 +9,7 @@ Sizes are in decimal units: 1 kB is 1000 bytes and 1 GB is 10⁹ bytes.
 - **Data**: the data under `derivatives/` on the cache's `derivatives` branch. A Zarr store counts the bytes of data it holds.
 - **On disk**: the same files as they sit in a clone. A store's last chunk file is padded with newlines to the full chunk size, so a small cache takes a whole chunk per output; the padding compresses to almost nothing in git.
 - **dist**: everything on the cache's `dist` branch, which is what it publishes, compressed.
-- **Cache last updated**: when the `derivatives` branch last changed.
+- **Cache last updated**: when the `derivatives` branch last changed, colored by how long ago that was when the table was drawn: green when just updated, through amber, to red at three days or more.
 - **Processed**: how many of the cache's candidates are recorded, from the `Progress:` line the last run wrote to its log under `logs/`. A dash means the latest runs did not write one: the cache predates that line in `dandi-cache-utils`, or it selects its own batch.
   Under it, in orange, a cache whose sourcedata is itself not fully processed shows how far it is end to end: its own fraction times that of every cache upstream of it that reports one. A cache done with half-done sourcedata stands at half. A cache upstream that reports no fraction counts as whole.
 
