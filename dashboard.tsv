@@ -1,0 +1,19 @@
+cache	sourcedata	used_by	derivatives_data	derivatives_files	dist_bytes	updated	recorded	candidates	end_to_end	truncated
+content-id-to-dandiset-paths		content-id-to-usage-dandiset-path	119989888	240003276	28436957	2026-10-31T12:10:36Z				False
+dandiset-id-to-number-of-assets			682932	160003266	7473	2026-10-31T12:27:23Z	1274	1274		False
+dandiset-id-to-title			746973	160003266	29819	2026-10-31T12:15:43Z	1274	1274		False
+content-id-to-usage-dandiset-path	content-id-to-dandiset-paths	content-id-to-nwb-file,dandiset-id-to-total-size,qualifying-aind-content-ids,usage-dandiset-path-to-asset-size	111620211	242444907	28148184	2026-10-31T06:15:38Z				False
+content-id-to-nwb-file	content-id-to-usage-dandiset-path	content-id-to-valid-nwb-file,qualifying-lfp-content-ids	32317422	80001638	10593217	2026-10-31T06:56:03Z				False
+usage-dandiset-path-to-asset-size	content-id-to-usage-dandiset-path	dandiset-id-to-total-size	33632886	80001638	16794927	2026-10-31T07:05:23Z				False
+content-id-to-valid-nwb-file	content-id-to-nwb-file	qualifying-aind-content-ids,qualifying-lfp-content-ids,valid-nwb-file-to-array-sizes,valid-nwb-file-to-chunk-stats,valid-nwb-file-to-cophenetic-index,valid-nwb-file-to-number-of-datasets,valid-nwb-file-to-number-of-groups,valid-nwb-file-to-out-degrees,valid-nwb-file-to-sackin-index	193203028	361331508	22205419	2026-10-31T08:52:38Z				False
+dandiset-id-to-total-size	content-id-to-usage-dandiset-path,usage-dandiset-path-to-asset-size		20789	80002295	7016	2026-10-31T07:33:16Z				False
+qualifying-lfp-content-ids	content-id-to-valid-nwb-file,content-id-to-nwb-file	qualifying-aind-content-ids	9308961	130334918	4148726	2026-10-31T12:43:18Z	178876	178876		False
+valid-nwb-file-to-array-sizes	content-id-to-valid-nwb-file	valid-nwb-file-to-byte-weighted-structure	15047908172	15120001644	574486304	2026-10-31T10:02:58Z	197338	197338		False
+valid-nwb-file-to-chunk-stats	content-id-to-valid-nwb-file		46342490	80001638	6416390	2026-10-31T12:10:58Z	197338	197338		False
+valid-nwb-file-to-cophenetic-index	content-id-to-valid-nwb-file		9254012	80001636	4508970	2026-10-31T08:58:53Z	197273	197338		False
+valid-nwb-file-to-number-of-datasets	content-id-to-valid-nwb-file		8988686	80002091	4420870	2026-10-31T12:18:50Z	197338	197338		False
+valid-nwb-file-to-number-of-groups	content-id-to-valid-nwb-file		8917874	80002087	4384776	2026-10-31T07:12:42Z	197338	197338		False
+valid-nwb-file-to-out-degrees	content-id-to-valid-nwb-file		38362400	80001638	6199610	2026-10-31T07:42:33Z	197273	197338		False
+valid-nwb-file-to-sackin-index	content-id-to-valid-nwb-file		12419670	80002269	4928506	2026-10-31T07:24:20Z	197338	197338		False
+qualifying-aind-content-ids	qualifying-lfp-content-ids,content-id-to-usage-dandiset-path,content-id-to-valid-nwb-file		151398	130334914	72889	2026-10-31T06:23:37Z	2490	2490		False
+valid-nwb-file-to-byte-weighted-structure	valid-nwb-file-to-array-sizes		200149405	251661518	26635118	2026-10-31T10:02:08Z				False
